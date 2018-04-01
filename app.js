@@ -4,9 +4,14 @@ var  mongoose = require('mongoose');
 var config=require('./config');
 var flash = require('connect-flash');
 var session = require('express-session');
+var bcrypt = require('bcryptjs');
+var passport= require('passport');
 var methodOverride = require('method-override')
 var bodyParser = require('body-parser');
 var lists= require('./models/list');
+var users= require('./models/users');
+var configpassport=require('./config/passport');
+const {ensureAuthenticated}=require('./helpers/auth');
 var app=express();
 var port = process.env.PORT ||3000;
 
@@ -24,25 +29,30 @@ app.use(bodyParser.json());
 app.use(methodOverride('_method'))
 
 //express session middleware
+// Express session midleware
 app.use(session({
-  secret: 'keyboard cat',
+  secret: 'secret',
   resave: true,
-  saveUninitialized: true,
-  cookie: { secure: true }
+  saveUninitialized: true
 }));
 
 //flash middleware
 app.use(flash());
+//passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(function(req,res,next) {
 
     res.locals.success_msg= req.flash('success_msg');
     res.locals.error_msg= req.flash('error_msg');
-      res.locals.error= req.flash('error');
+    res.locals.error= req.flash('error');
+    res.locals.userid=req.user || null;
       next();
 
 });
 
+configpassport(passport);
 
 app.get('/',(req,res)=>{
   var title='welcome';
@@ -57,16 +67,13 @@ app.get('/about',(req,res)=>{
 });
 
 
-app.get('/list/add',(req,res)=>{
+app.get('/list/add',ensureAuthenticated,(req,res)=>{
 
         res.render('list/add');
 });
 
 
-
-
-
-app.post('/list/add',(req,res)=>{
+app.post('/list/add',ensureAuthenticated,(req,res)=>{
 
         let errors=[];
         if(!req.body.title){
@@ -82,13 +89,16 @@ app.post('/list/add',(req,res)=>{
           res.render('list/add',{
             errors:errors,
             title:req.body.title,
-            details:req.body.details
+            details:req.body.details,
+            user:req.user.id
           });
         }
         else {
+
           var list= lists({
             title:req.body.title,
-            details:req.body.details
+            details:req.body.details,
+            user:req.user.id
           });
 
             list.save()
@@ -103,10 +113,8 @@ app.post('/list/add',(req,res)=>{
 
 
 
-
-
-app.get('/list',(req,res)=>{
-        lists.find({})
+app.get('/list',ensureAuthenticated,(req,res)=>{
+        lists.find({user:req.user.id})
         .sort({date:'desc'})
         .then((data)=>{
           res.render('list/list',{
@@ -117,22 +125,28 @@ app.get('/list',(req,res)=>{
 });
 
 
-app.get('/list/edit/:id',(req,res)=>{
+app.get('/list/edit/:id',ensureAuthenticated,(req,res)=>{
        lists.find({
          _id:req.params.id
        })
        .then((data)=>{
-         res.render('list/edit',{
-           data:data[0]
-         });
-         console.log(data[0].title);
-       })
+         if(data.user.id!= req.user.id){
+           req.flash('error_msg','not allowed');
+           req.redirect('/list');
+         }
+         else {
+           res.render('list/edit',{
+             data:data[0]
+           });
+         }
+
+       });
 
 
 });
 
 
-app.get('/list/delete/:id',(req,res)=>{
+app.get('/list/delete/:id',ensureAuthenticated,(req,res)=>{
   lists.find({
     _id:req.params.id
   })
@@ -144,7 +158,7 @@ app.get('/list/delete/:id',(req,res)=>{
 });
 
 
-app.delete('/list/:id',(req,res)=>{
+app.delete('/list/:id',ensureAuthenticated,(req,res)=>{
 
         lists.findOneAndRemove(req.params.id)
         .then(()=>{
@@ -157,7 +171,7 @@ app.delete('/list/:id',(req,res)=>{
 });
 
 
-app.put('/list/:id',(req,res)=>{
+app.put('/list/:id',ensureAuthenticated,(req,res)=>{
     lists.findOneAndUpdate(req.params.id,
       {
         title:req.body.title,
@@ -172,6 +186,89 @@ app.put('/list/:id',(req,res)=>{
 });
 
 
+app.get('/login',(req,res)=>{
+
+      res.render('login');
+});
+
+app.post('/login',(req,res,next)=>{
+        passport.authenticate('local',{
+          successRedirect:'/list',
+          failureRedirect:'/login',
+          failureFlash:true
+        })(req,res,next);
+});
+
+app.get('/register',(req,res)=>{
+
+      res.render('register');
+});
+
+app.post('/register',(req,res)=>{
+        let errors=[];
+        if(req.body.password != req.body.passwordconfirmation) {
+          errors.push({text:'passwords do not match'});
+        }
+
+        if(req.body.password.length < 4) {
+          errors.push({text:'password must be more then 4 character'});
+        }
+
+        if(errors.length >0) {
+          res.render('register',{
+              errors:errors,
+              name:req.body.name,
+              email:req.body.email,
+              password:req.body.password,
+              password2:req.body.passwordconfirmation
+          });
+        }
+        else {
+          users.findOne({email:req.body.email})
+          .then((data)=>{
+            if(data){
+              req.flash('error_msg','user already exist with this email ');
+              res.redirect('/register')
+            }
+            else{
+              var user= users({
+                name:req.body.name,
+                email:req.body.email,
+                password:req.body.password
+              });
+
+              bcrypt.genSalt(10,(err,salt)=>{
+                  bcrypt.hash(user.password,salt,(err,hash)=>{
+                        if(err){
+                          throw err;
+                        }
+                        else {
+                           user.password =hash;
+                           user.save()
+                           .then(()=>{
+                             req.flash('success_msg','user created now you can login');
+                             res.redirect('/login');
+                           });
+                        }
+                  });
+
+              });
+
+            }
+          });
+
+
+        }
+
+
+});
+
+app.get('/logout',(req,res)=>{
+      req.logout();
+      req.flash('success_msg','you are logout');
+      res.redirect('/login');
+
+});
 
 mongoose.connect(config.getDbconnectionstring()).then(()=>{
   console.log('mongodb connected');

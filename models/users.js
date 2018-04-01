@@ -2,16 +2,16 @@ var  mongoose = require('mongoose');
 
 var schema = mongoose.Schema;
 
-var bucketlist= new schema({
-      title:{
+var users= new schema({
+      name:{
         type: String,
         require:true
       },
-      details:{
+      email:{
         type:String,
         require:true
       },
-      user:{
+      password:{
         type:String,
         require:true
       },
@@ -24,6 +24,7 @@ var bucketlist= new schema({
     autoIndexId: true
   });
 
-var list = mongoose.model('BucketList',bucketlist);
 
-module.exports =list;
+  var user = mongoose.model('users',users);
+
+  module.exports =user;

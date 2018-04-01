@@ -15,6 +15,11 @@
 
 
 </ul>
+
+<form class="form-inline my-2 my-lg-0">
+
+{{#if userid}}
+
 <ul class="navbar-nav mr-5">
 <li class="nav-item dropdown right">
       <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -25,11 +30,17 @@
         <a class="dropdown-item" href="/list">Existing Bucket List</a>
       </div>
     </li>
-    </ul>
-<form class="form-inline my-2 my-lg-0">
+    <li class="nav-item">
+      <a class="nav-link" href="/logout">logout</a>
+    </li>
+
+  </ul>
+
+
+{{ else }}
 
 <ul class="navbar-nav mr-auto">
-<li class="nav-item active">
+<li class="nav-item">
   <a class="nav-link" href="/login">Login</a>
 </li>
 <li class="nav-item">
@@ -37,6 +48,9 @@
 </li>
 
 </ul>
+
+
+{{/if}}
 
 </form>
 </div>
