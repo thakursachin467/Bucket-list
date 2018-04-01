@@ -1,0 +1,26 @@
+{{#each errors}}
+  <div class="alert alert-danger">
+    {{text}}
+  </div>
+
+  {{else}}
+
+{{/each}}
+<div class="card card-body">
+  <h3>Edit Bucket-list Item</h3>
+  <form action="/list/{{data.id}}?_method=PUT" method="post">
+    <input type="hidden" name="_method" value="PUT">
+
+    <div class="form-group">
+      <label for="exampleInputEmail1">Title</label>
+      <input type="text" class="form-control" name="title" value="{{data.title}}">
+      <small id="emailHelp" class="form-text text-muted">edit the title for your bucket-list here.</small>
+    </div>
+    <div class="form-group">
+      <label >Description</label>
+      <textarea class="form-control" rows="5"  name="details" >{{data.details}}</textarea>
+      <small id="emailHelp" class="form-text text-muted">edit the details for your bucket-list here.</small>
+    </div>
+    <button type="submit" class="btn btn-primary ">edit</button>
+  </form>
+</div>

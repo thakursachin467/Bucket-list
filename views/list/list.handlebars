@@ -1,0 +1,21 @@
+{{# each list}}
+<div class="card mt-2 ">
+
+
+<div class="card-header ">
+<h4> {{title}} </h4>
+</div>
+<div class="card-body ">
+
+    <h4>  Details: </h4><p>{{details}}</p>
+</div>
+
+<a href="/list/edit/{{id}}" class="btn btn-primary btn-lg btn-block">edit</a>
+<a href="/list/delete/{{id}}" class="btn btn-secondary btn-lg btn-block">delete</a>
+
+</div>
+
+{{else}}
+  <p>no list ite</p>
+
+{{/each}}

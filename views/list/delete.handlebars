@@ -1,0 +1,16 @@
+<div class="card card-body">
+  <h3>Are you sure you want to delete this bucket-list</h3>
+  <form action="/list/{{data.id}}?_method=DELETE" method="post">
+    <input type="hidden" name="_method" value="DELETE">
+    <div class="form-group">
+      <label for="exampleInputEmail1">Title</label>
+      <input type="text" class="form-control" name="title" value="{{data.title}}">
+
+    </div>
+    <div class="form-group">
+      <label >Description</label>
+      <textarea class="form-control" rows="5"  name="details" >{{data.details}}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary ">delete</button>
+  </form>
+</div>
