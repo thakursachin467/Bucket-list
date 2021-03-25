@@ -18,10 +18,10 @@
     "express-handlebars": "^3.0.0",
     "express-session": "^1.15.6",
     "method-override": "^2.3.10",
-    "mongoose": "^5.7.5",
+    "mongoose": "^5.12.2",
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
-    "snyk": "^1.258.2"
+    "snyk": "^1.465.0"
   },
   "snyk": true
 }
